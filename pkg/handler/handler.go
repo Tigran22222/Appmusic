@@ -1,8 +1,17 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"appmusic/pkg/service"
+	"github.com/gin-gonic/gin"
+)
 
-type Handler struct{}
+type Handler struct {
+	services *service.Service
+}
+
+func NewHandler(services *service.Service) *Handler {
+	return &Handler{services: services}
+}
 
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
@@ -13,7 +22,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/sign-in", h.signIn)
 	}
 
-	api := router.Group("/api")
+	api := router.Group("/api", h.userIdentity)
 	{
 		albums := api.Group("/albums")
 		{
@@ -27,18 +36,18 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			{
 				tracks.POST("/", h.createTrackInAlbum)
 				tracks.GET("/", h.getAllTracks)
-				tracks.GET("/:id", h.getTrackById)
-				tracks.PUT("/:id", h.updateTrack)
-				tracks.DELETE("/:id", h.deleteTrack)
+				tracks.GET("/:trackId", h.getTrackByIdFromAlbum)
+				tracks.DELETE("/:trackId", h.deleteTrackByIdFromAlbum)
+				tracks.PUT("/:trackId", h.updateByIdFromAlbum)
 
 			}
 		}
-		/*tracks := api.Group("/tracks")
+		tracks := api.Group("/tracks")
 		{
-			tracks.GET("/:id")
-			tracks.PUT("/:id")
-			tracks.DELETE("/:id")
-		}*/
+			tracks.GET("/:trackId", h.getTrackByIdFromAlbum)
+			tracks.PUT("/:id", h.updateByIdFromAlbum)
+			tracks.DELETE("/:trackId", h.deleteTrackByIdFromAlbum)
+		}
 	}
 	return router
 }

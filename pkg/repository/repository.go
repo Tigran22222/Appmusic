@@ -1,14 +1,13 @@
-package service
+package repository
 
 import (
 	"appmusic"
-	"appmusic/pkg/repository"
+	"github.com/jmoiron/sqlx"
 )
 
 type Authorization interface {
-	GenerateToken(username, password string) (string, error)
 	CreateUser(user appmusic.User) (int, error)
-	ParseToken(token string) (int, error)
+	GetUser(username, password string) (appmusic.User, error)
 }
 
 type Album interface {
@@ -16,27 +15,27 @@ type Album interface {
 	GetAll(userId int) ([]appmusic.Album, error)
 	GetById(userId int, albumId int) (appmusic.Album, error)
 	Delete(userId, albumId int) error
-	Update(userId, albumId int, input appmusic.UpdateAlbumInput) error
+	Update(userId int, albumId int, input appmusic.UpdateAlbumInput) error
 }
 
 type Track interface {
-	Create(userId, albumId int, track appmusic.Track) (int, error)
+	Create(albumId int, track appmusic.Track) (int, error)
 	GetAll(userId, trackId int) ([]appmusic.Track, error)
 	GetByIdFromAlbum(userId, albumId, trackId int) (appmusic.Track, error)
 	DeleteByIdFromAlbum(userId, albumId, trackId int) error
 	UpdateByIdFromAlbum(userId, albumId, trackId int, input appmusic.UpdateTrackInput) error
 }
 
-type Service struct {
+type Repository struct {
 	Authorization
 	Album
 	Track
 }
 
-func NewService(repos *repository.Repository) *Service {
-	return &Service{
-		Authorization: NewAuthService(repos.Authorization),
-		Album:         NewAppmusicAlbumService(repos.Album),
-		Track:         NewAppmusicTrackService(repos.Track, repos.Album),
+func NewRepository(db *sqlx.DB) *Repository {
+	return &Repository{
+		Authorization: NewAuthPostgres(db),
+		Album:         NewAppmusicAlbumPostgres(db),
+		Track:         NewAppmusicTrackPostgres(db),
 	}
 }
